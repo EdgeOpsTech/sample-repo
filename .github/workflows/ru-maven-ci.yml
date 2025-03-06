@@ -1,36 +1,45 @@
-name: CI Build from sample-repo
+name: Maven CI & Docker Build
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+
     steps:
+      # 🛠 Checkout `sample-repo`
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 🔧 Set up JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Build and Package Application
-        run: |
-          if [ -f "pom.xml" ]; then
-            mvn clean package
-          else
-            echo "No pom.xml found, skipping Maven build"
-          fi
+      # ⚙️ Build with Maven
+      - name: Build JAR with Maven
+        run: mvn clean package -DskipTests
 
+      # 🔍 Verify JAR File Exists
+      - name: Verify JAR File
+        run: ls -lah target/
+
+      # 🔑 Log in to GitHub Container Registry (GHCR)
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push Docker Image
+      # 🏗 Build and Tag Docker Image
+      - name: Build and tag Docker image
         run: |
-          docker build -t ghcr.io/edgeopstech/sample-repo:latest .
-          docker push ghcr.io/edgeopstech/sample-repo:latest
+          docker build \
+            --build-arg JAR_FILE=target/*.jar \
+            -t ghcr.io/edgeopstech/sample-repo:latest .
+
+      # 🚀 Push Docker Image to GHCR
+      - name: Push Docker Image to GHCR
+        run: docker push ghcr.io/edgeopstech/sample-repo:latest
