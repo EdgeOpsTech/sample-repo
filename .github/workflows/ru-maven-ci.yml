@@ -44,4 +44,8 @@ jobs:
       - name: Push Docker Image to GHCR
         run: |
           docker push ghcr.io/$REPO_OWNER/sample-repo:latest
-          docker push ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
+          if [ ! -z "${{ github.run_number }}" ]; then
+            docker tag ghcr.io/$REPO_OWNER/sample-repo:latest ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
+            docker push ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
+          fi
+
