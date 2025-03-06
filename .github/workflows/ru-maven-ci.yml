@@ -1,4 +1,4 @@
-name: Download JAR and Build Docker Image
+name: Download JAR from sample-springboot-app and Build Docker Image
 
 on:
   workflow_dispatch:
@@ -13,20 +13,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Download JAR Artifact
-        uses: actions/download-artifact@v4
+      - name: Download JAR Artifact from sample-springboot-app
+        uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: ru-maven-ci.yml # Ensure this is the correct workflow name in sample-springboot-app
+          repo: EdgeOpsTech/sample-springboot-app
           name: springboot-app-jar
           path: target/
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to GitHub Container Registry
+      - name: Verify JAR File
+        run: ls -l target/
+
+      - name: Log in to GitHub Container Registry (GHCR)
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and tag Docker image
+      - name: Set Environment Variables
+        run: |
+          echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "SOURCE_REGISTRY=ghcr.io" >> $GITHUB_ENV
+          echo "SOURCE_IMAGE=$REPO_OWNER/sample-repo" >> $GITHUB_ENV
+          echo "SOURCE_IMAGE_TAG=latest" >> $GITHUB_ENV
+
+      - name: Build and Tag Docker Image
         run: |
           docker build \
             --build-arg JAR_FILE=target/*.jar \
-            -t ghcr.io/edgeopstech/sample-repo:latest .
+            -t ghcr.io/$REPO_OWNER/sample-repo:latest .
 
       - name: Push Docker Image to GHCR
-        run: docker push ghcr.io/edgeopstech/sample-repo:latest
+        run: |
+          docker push ghcr.io/$REPO_OWNER/sample-repo:latest
+          docker push ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
