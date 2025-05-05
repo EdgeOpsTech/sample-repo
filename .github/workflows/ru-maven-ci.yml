@@ -3,7 +3,10 @@ name: Download JAR from sample-springboot-app and Build Docker Image
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - "main"
+      - "develop"
+      - "feature/*"
 
 jobs:
   build-and-push:
@@ -48,4 +51,3 @@ jobs:
             docker tag ghcr.io/$REPO_OWNER/sample-repo:latest ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
             docker push ghcr.io/$REPO_OWNER/sample-repo:${{ github.run_number }}
           fi
-
