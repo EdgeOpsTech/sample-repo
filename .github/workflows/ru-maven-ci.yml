@@ -1,4 +1,4 @@
-name: Download JAR from sample-springboot-app and Build Docker Image
+name: Maven CI LOCAL
 
 on:
   workflow_dispatch:
