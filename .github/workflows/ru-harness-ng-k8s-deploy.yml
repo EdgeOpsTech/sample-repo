@@ -1,4 +1,4 @@
-name: Deploy Spring Boot App to Harness K8s
+name: Deploy Spring Boot App to Harness K8s Cluster
 
 on:
   workflow_dispatch:
